@@ -6,11 +6,10 @@ RUN addgroup --system --gid 1000 appuser && \
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
+COPY src ./src
 
 RUN pip install --no-cache-dir uv && \
     uv sync --frozen --no-dev
-
-COPY src ./src
 
 RUN chown -R appuser:appuser /app
 

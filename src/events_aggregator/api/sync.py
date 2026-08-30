@@ -10,7 +10,11 @@ from events_aggregator.core.database import get_session
 from events_aggregator.repositories import EventRepository, SyncRepository
 from events_aggregator.services import EventSyncService
 
-router = APIRouter(prefix="/api/sync", tags=["sync"])
+
+router = APIRouter(
+    prefix="/api/sync",
+    tags=["sync"],
+)
 
 
 def get_events_provider_client() -> EventsProviderClient:
@@ -21,9 +25,13 @@ def get_events_provider_client() -> EventsProviderClient:
 
 
 @router.post("")
+@router.post("/trigger")
 async def sync_events(
     date_from: date | None = None,
-    session: Annotated[AsyncSession, Depends(get_session)] = None,
+    session: Annotated[
+        AsyncSession,
+        Depends(get_session),
+    ] = None,
     client: Annotated[
         EventsProviderClient,
         Depends(get_events_provider_client),

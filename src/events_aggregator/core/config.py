@@ -6,7 +6,9 @@ class Settings(BaseSettings):
         "postgresql+asyncpg://postgres:postgres@localhost:5432/events_aggregator"
     )
 
-    events_provider_url: str = "https://events-provider.dev-2.python-labs.ru"
+    events_provider_url: str = (
+        "https://events-provider.dev-2.python-labs.ru"
+    )
 
     events_provider_api_key: str = ""
 
@@ -14,6 +16,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        case_sensitive=False,
     )
 
 

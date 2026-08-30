@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from events_aggregator.clients.events_provider import EventsProviderClient
@@ -12,7 +12,11 @@ from events_aggregator.schemas.tickets import (
     TicketResponse,
 )
 
-router = APIRouter(prefix="/api/events", tags=["tickets"])
+
+router = APIRouter(
+    prefix="/api/tickets",
+    tags=["tickets"],
+)
 
 
 def get_events_provider_client() -> EventsProviderClient:
@@ -23,20 +27,22 @@ def get_events_provider_client() -> EventsProviderClient:
 
 
 @router.post(
-    "/{event_id}/register",
+    "",
     response_model=TicketResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 async def register_ticket(
-    event_id: UUID,
     ticket_data: TicketCreateRequest,
     session: AsyncSession = Depends(get_session),
-    client: EventsProviderClient = Depends(get_events_provider_client),
+    client: EventsProviderClient = Depends(
+        get_events_provider_client,
+    ),
 ) -> TicketResponse:
     repository = TicketRepository(session)
 
     try:
         ticket_id = await client.register(
-            event_id=str(event_id),
+            event_id=str(ticket_data.event_id),
             first_name=ticket_data.first_name,
             last_name=ticket_data.last_name,
             email=ticket_data.email,
@@ -49,19 +55,12 @@ async def register_ticket(
         ) from exc
 
     ticket = await repository.create(
-        event_id=event_id,
+        event_id=ticket_data.event_id,
         ticket_id=UUID(ticket_id),
         first_name=ticket_data.first_name,
         last_name=ticket_data.last_name,
         email=ticket_data.email,
         seat=ticket_data.seat,
-    )
-
-    print(
-        "SAVED TICKET:",
-        ticket.ticket_id,
-        ticket.event_id,
-        ticket.seat,
     )
 
     return TicketResponse(
@@ -75,19 +74,20 @@ async def register_ticket(
 
 
 @router.delete(
-    "/{event_id}/register/{ticket_id}",
+    "/{ticket_id}",
 )
 async def unregister_ticket(
-    event_id: UUID,
     ticket_id: UUID,
     session: AsyncSession = Depends(get_session),
-    client: EventsProviderClient = Depends(get_events_provider_client),
+    client: EventsProviderClient = Depends(
+        get_events_provider_client,
+    ),
 ) -> dict[str, bool]:
     repository = TicketRepository(session)
 
     ticket = await repository.get(ticket_id)
 
-    if ticket is None or ticket.event_id != event_id:
+    if ticket is None:
         raise HTTPException(
             status_code=404,
             detail="Ticket not found",
@@ -95,8 +95,8 @@ async def unregister_ticket(
 
     try:
         success = await client.unregister(
-            event_id=str(event_id),
-            ticket_id=str(ticket_id),
+            event_id=str(ticket.event_id),
+            ticket_id=str(ticket.ticket_id),
         )
     except Exception as exc:
         raise HTTPException(

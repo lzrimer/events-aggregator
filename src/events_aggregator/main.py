@@ -5,7 +5,6 @@ from events_aggregator.api.seats import router as seats_router
 from events_aggregator.api.sync import router as sync_router
 from events_aggregator.api.tickets import router as tickets_router
 
-
 app = FastAPI(
     title="Events Aggregator",
 )

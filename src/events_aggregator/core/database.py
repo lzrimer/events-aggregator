@@ -8,9 +8,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from events_aggregator.core.config import settings
-from events_aggregator.models import Event, Place, SyncMetadata, Ticket
 from events_aggregator.models.base import Base
-
 
 engine = create_async_engine(
     settings.database_url,

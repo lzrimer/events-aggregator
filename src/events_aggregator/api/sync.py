@@ -10,7 +10,6 @@ from events_aggregator.core.database import get_session
 from events_aggregator.repositories import EventRepository, SyncRepository
 from events_aggregator.services import EventSyncService
 
-
 router = APIRouter(
     prefix="/api/sync",
     tags=["sync"],

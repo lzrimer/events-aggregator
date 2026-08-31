@@ -12,7 +12,6 @@ from events_aggregator.schemas.tickets import (
     TicketResponse,
 )
 
-
 router = APIRouter(
     prefix="/api/tickets",
     tags=["tickets"],

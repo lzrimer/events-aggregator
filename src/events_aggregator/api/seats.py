@@ -6,7 +6,6 @@ from events_aggregator.clients.events_provider import EventsProviderClient
 from events_aggregator.core.config import settings
 from events_aggregator.schemas.seats import SeatsResponse
 
-
 router = APIRouter(
     prefix="/api/events",
     tags=["seats"],

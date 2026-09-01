@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from events_aggregator.models.database import Event
+from events_aggregator.models import Event
 
 
 class EventRepository:

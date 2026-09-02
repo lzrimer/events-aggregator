@@ -35,9 +35,7 @@ class TicketService:
                 seat=ticket_data.seat,
             )
         except Exception as exc:
-            raise RuntimeError(
-                f"Failed to register ticket: {exc}"
-            ) from exc
+            raise RuntimeError(f"Failed to register ticket: {exc}") from exc
 
         return await self.repository.create(
             ticket_id=UUID(ticket_id),

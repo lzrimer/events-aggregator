@@ -24,7 +24,7 @@ class EventSyncService:
         if date_from is not None:
             changed_at = date_from.isoformat()
         elif last_sync is not None and last_sync.last_changed_at is not None:
-            changed_at = last_sync.last_changed_at.isoformat()
+            changed_at = last_sync.last_changed_at.date().isoformat()
         else:
             changed_at = None
 

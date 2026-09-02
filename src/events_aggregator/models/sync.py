@@ -14,7 +14,7 @@ class SyncStatus(StrEnum):
 
 
 class SyncMetadata(Base):
-    tablename = "sync_metadata"
+    __tablename__ = "sync_metadata"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     last_sync_time: Mapped[datetime | None] = mapped_column(

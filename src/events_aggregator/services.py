@@ -2,6 +2,7 @@ from datetime import UTC, date, datetime
 
 from events_aggregator.clients.events_provider import EventsProviderClient
 from events_aggregator.clients.paginator import EventsPaginator
+from events_aggregator.models import SyncStatus
 from events_aggregator.repositories import EventRepository, SyncRepository
 
 
@@ -48,11 +49,13 @@ class EventSyncService:
 
         if last_changed_at:
             last_changed_at_datetime = datetime.fromisoformat(last_changed_at)
+        elif last_sync is not None:
+            last_changed_at_datetime = last_sync.last_changed_at
 
         await self.sync_repository.save(
             last_sync_time=started_at,
             last_changed_at=last_changed_at_datetime,
-            sync_status="success",
+            sync_status=SyncStatus.SUCCESS,
         )
 
         return count

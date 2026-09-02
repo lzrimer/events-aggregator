@@ -73,38 +73,25 @@ async def register_ticket(
 )
 async def unregister_ticket(
     ticket_id: UUID,
-    session: AsyncSession = Depends(get_session),
-    client: EventsProviderClient = Depends(
-        get_events_provider_client,
-    ),
+    service: TicketService = Depends(get_ticket_service),
 ) -> dict[str, bool]:
-    repository = TicketRepository(session)
-
-    ticket = await repository.get(ticket_id)
-
-    if ticket is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Ticket not found",
-        )
-
     try:
-        success = await client.unregister(
-            event_id=str(ticket.event_id),
-            ticket_id=str(ticket.ticket_id),
-        )
-    except Exception as exc:
-        raise HTTPException(
-            status_code=502,
-            detail="Failed to unregister ticket",
-        ) from exc
+        await service.unregister_ticket(ticket_id)
+    except ValueError as exc:
+        if str(exc) == "Ticket not found":
+            raise HTTPException(
+                status_code=404,
+                detail=str(exc),
+            ) from exc
 
-    if not success:
         raise HTTPException(
             status_code=400,
-            detail="Ticket was not unregistered",
-        )
-
-    await repository.delete(ticket)
+            detail=str(exc),
+        ) from exc
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=str(exc),
+        ) from exc
 
     return {"success": True}

@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from events_aggregator.models import SyncMetadata
+from events_aggregator.models import SyncMetadata, SyncStatus
 
 
 class SyncRepository:
@@ -21,7 +21,7 @@ class SyncRepository:
         self,
         last_sync_time: datetime,
         last_changed_at: datetime | None,
-        sync_status: str,
+        sync_status: SyncStatus,
     ) -> SyncMetadata:
         metadata = await self.get()
 

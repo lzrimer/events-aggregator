@@ -13,17 +13,16 @@ router = APIRouter(
 )
 
 
-def get_events_provider_client() -> EventsProviderClient:
-    return EventsProviderClient(
+seats_service = SeatsService(
+    EventsProviderClient(
         base_url=settings.events_provider_url,
         api_key=settings.events_provider_api_key,
     )
+)
 
 
-def get_seats_service(
-    client: EventsProviderClient = Depends(get_events_provider_client),
-) -> SeatsService:
-    return SeatsService(client)
+def get_seats_service() -> SeatsService:
+    return seats_service
 
 
 @router.get("/{event_id}/seats", response_model=SeatsResponse)

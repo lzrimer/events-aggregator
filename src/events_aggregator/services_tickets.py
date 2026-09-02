@@ -35,13 +35,34 @@ class TicketService:
                 seat=ticket_data.seat,
             )
         except Exception as exc:
-            raise RuntimeError(f"Failed to register ticket: {exc}") from exc
+            raise RuntimeError(
+                f"Failed to register ticket: {exc}"
+            ) from exc
 
         return await self.repository.create(
-            event_id=event_id,
             ticket_id=UUID(ticket_id),
+            event_id=event_id,
             first_name=ticket_data.first_name,
             last_name=ticket_data.last_name,
             email=ticket_data.email,
             seat=ticket_data.seat,
         )
+
+    async def unregister_ticket(self, ticket_id: UUID) -> None:
+        ticket = await self.repository.get(ticket_id)
+
+        if ticket is None:
+            raise ValueError("Ticket not found")
+
+        try:
+            success = await self.client.unregister(
+                event_id=str(ticket.event_id),
+                ticket_id=str(ticket.ticket_id),
+            )
+        except Exception as exc:
+            raise RuntimeError("Failed to unregister ticket") from exc
+
+        if not success:
+            raise ValueError("Ticket was not unregistered")
+
+        await self.repository.delete(ticket)

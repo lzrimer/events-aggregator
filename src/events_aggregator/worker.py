@@ -9,6 +9,9 @@ from events_aggregator.services import EventSyncService
 
 logger = logging.getLogger(__name__)
 
+SYNC_INTERVAL = 24 * 60 * 60
+RETRY_INTERVAL = 60
+
 
 async def sync_worker() -> None:
     while True:
@@ -27,5 +30,7 @@ async def sync_worker() -> None:
 
         except Exception:
             logger.exception("Event synchronization failed")
+            await asyncio.sleep(RETRY_INTERVAL)
+            continue
 
-        await asyncio.sleep(24 * 60 * 60)
+        await asyncio.sleep(SYNC_INTERVAL)

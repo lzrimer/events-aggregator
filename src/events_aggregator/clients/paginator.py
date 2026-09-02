@@ -4,7 +4,7 @@ from events_aggregator.clients.events_provider import EventsProviderClient
 
 
 class EventsPaginator:
-    def __init__(self, client: EventsProviderClient, changed_at: str):
+    def __init__(self, client: EventsProviderClient, changed_at: str | None):
         self.client = client
         self.changed_at = changed_at
 

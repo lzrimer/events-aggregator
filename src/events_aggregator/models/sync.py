@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import StrEnum
 
 from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -6,8 +7,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 from events_aggregator.models.base import Base
 
 
+class SyncStatus(StrEnum):
+    NEVER = "never"
+    SUCCESS = "success"
+    FAILED = "failed"
+
+
 class SyncMetadata(Base):
-    __tablename__ = "sync_metadata"
+    tablename = "sync_metadata"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     last_sync_time: Mapped[datetime | None] = mapped_column(
@@ -18,7 +25,7 @@ class SyncMetadata(Base):
         DateTime(timezone=True),
         nullable=True,
     )
-    sync_status: Mapped[str] = mapped_column(
+    sync_status: Mapped[SyncStatus] = mapped_column(
         String(20),
-        default="never",
+        default=SyncStatus.NEVER,
     )

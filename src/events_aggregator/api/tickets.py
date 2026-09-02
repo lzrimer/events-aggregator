@@ -11,6 +11,7 @@ from events_aggregator.schemas.tickets import (
     TicketCreateRequest,
     TicketResponse,
 )
+from events_aggregator.services_tickets import TicketService
 
 router = APIRouter(
     prefix="/api/tickets",
@@ -25,6 +26,16 @@ def get_events_provider_client() -> EventsProviderClient:
     )
 
 
+def get_ticket_service(
+    session: AsyncSession = Depends(get_session),
+    client: EventsProviderClient = Depends(get_events_provider_client),
+) -> TicketService:
+    return TicketService(
+        repository=TicketRepository(session),
+        client=client,
+    )
+
+
 @router.post(
     "",
     response_model=TicketResponse,
@@ -32,49 +43,20 @@ def get_events_provider_client() -> EventsProviderClient:
 )
 async def register_ticket(
     ticket_data: TicketCreateRequest,
-    session: AsyncSession = Depends(get_session),
-    client: EventsProviderClient = Depends(
-        get_events_provider_client,
-    ),
+    service: TicketService = Depends(get_ticket_service),
 ) -> TicketResponse:
-    repository = TicketRepository(session)
-
     try:
-        event_id = UUID(ticket_data.event_id)
+        ticket = await service.register_ticket(ticket_data)
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
-            detail="Invalid event_id",
+            detail=str(exc),
         ) from exc
-
-    if "@" not in ticket_data.email:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid email",
-        )
-
-    try:
-        ticket_id = await client.register(
-            event_id=str(event_id),
-            first_name=ticket_data.first_name,
-            last_name=ticket_data.last_name,
-            email=ticket_data.email,
-            seat=ticket_data.seat,
-        )
-    except Exception as exc:
+    except RuntimeError as exc:
         raise HTTPException(
             status_code=502,
-            detail=f"Failed to register ticket: {exc}",
+            detail=str(exc),
         ) from exc
-
-    ticket = await repository.create(
-        event_id=event_id,
-        ticket_id=UUID(ticket_id),
-        first_name=ticket_data.first_name,
-        last_name=ticket_data.last_name,
-        email=ticket_data.email,
-        seat=ticket_data.seat,
-    )
 
     return TicketResponse(
         ticket_id=ticket.ticket_id,

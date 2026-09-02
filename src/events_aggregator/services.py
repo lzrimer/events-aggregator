@@ -1,6 +1,7 @@
 from datetime import UTC, date, datetime
 
 from events_aggregator.clients.events_provider import EventsProviderClient
+from events_aggregator.clients.paginator import EventsPaginator
 from events_aggregator.repositories import EventRepository, SyncRepository
 
 
@@ -18,33 +19,30 @@ class EventSyncService:
     async def sync(self, date_from: date | None = None) -> int:
         started_at = datetime.now(UTC)
 
-        events_data = await self.client.events(
-            date_from.isoformat() if date_from else None
-        )
+        last_sync = await self.sync_repository.get()
+
+        if date_from is not None:
+            changed_at = date_from.isoformat()
+        elif last_sync is not None and last_sync.last_changed_at is not None:
+            changed_at = last_sync.last_changed_at.isoformat()
+        else:
+            changed_at = None
 
         count = 0
         last_changed_at = None
 
-        while True:
-            results = events_data.get("results", [])
+        paginator = EventsPaginator(self.client, changed_at)
 
-            for event_data in results:
-                await self.repository.save(event_data)
-                count += 1
+        async for event_data in paginator:
+            await self.repository.save(event_data)
+            count += 1
 
-                changed_at = event_data.get("changed_at")
+            event_changed_at = event_data.get("changed_at")
 
-                if changed_at and (
-                    last_changed_at is None or changed_at > last_changed_at
-                ):
-                    last_changed_at = changed_at
-
-            next_url = events_data.get("next")
-
-            if not next_url:
-                break
-
-            events_data = await self.client.events_page(next_url)
+            if event_changed_at and (
+                last_changed_at is None or event_changed_at > last_changed_at
+            ):
+                last_changed_at = event_changed_at
 
         last_changed_at_datetime = None
 

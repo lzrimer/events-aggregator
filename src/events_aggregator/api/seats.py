@@ -1,11 +1,11 @@
 from uuid import UUID
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 
 from events_aggregator.clients.events_provider import EventsProviderClient
 from events_aggregator.core.config import settings
 from events_aggregator.schemas.seats import SeatsResponse
+from events_aggregator.services_seats import SeatsService
 
 router = APIRouter(
     prefix="/api/events",
@@ -20,27 +20,25 @@ def get_events_provider_client() -> EventsProviderClient:
     )
 
 
+def get_seats_service(
+    client: EventsProviderClient = Depends(get_events_provider_client),
+) -> SeatsService:
+    return SeatsService(client)
+
+
 @router.get("/{event_id}/seats", response_model=SeatsResponse)
 async def get_event_seats(
     event_id: UUID,
-    client: EventsProviderClient = Depends(
-        get_events_provider_client,
-    ),
+    service: SeatsService = Depends(get_seats_service),
 ) -> SeatsResponse:
     try:
-        seats = await client.seats(str(event_id))
-    except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == 404:
-            raise HTTPException(
-                status_code=404,
-                detail="Event not found",
-            ) from exc
-
+        seats = await service.get_seats(event_id)
+    except ValueError as exc:
         raise HTTPException(
-            status_code=502,
-            detail="Failed to get event seats",
+            status_code=404,
+            detail="Event not found",
         ) from exc
-    except httpx.HTTPError as exc:
+    except RuntimeError as exc:
         raise HTTPException(
             status_code=502,
             detail="Failed to get event seats",

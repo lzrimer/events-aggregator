@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 
 from events_aggregator.clients.events_provider import EventsProviderClient
@@ -28,10 +29,21 @@ async def get_event_seats(
 ) -> SeatsResponse:
     try:
         seats = await client.seats(str(event_id))
-    except Exception as exc:
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code == 404:
+            raise HTTPException(
+                status_code=404,
+                detail="Event not found",
+            ) from exc
+
         raise HTTPException(
             status_code=502,
-            detail=f"Failed to get event seats: {exc}",
+            detail="Failed to get event seats",
+        ) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to get event seats",
         ) from exc
 
     return SeatsResponse(

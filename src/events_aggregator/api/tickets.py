@@ -40,8 +40,22 @@ async def register_ticket(
     repository = TicketRepository(session)
 
     try:
+        event_id = UUID(ticket_data.event_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid event_id",
+        ) from exc
+
+    if "@" not in ticket_data.email:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid email",
+        )
+
+    try:
         ticket_id = await client.register(
-            event_id=str(ticket_data.event_id),
+            event_id=str(event_id),
             first_name=ticket_data.first_name,
             last_name=ticket_data.last_name,
             email=ticket_data.email,
@@ -54,7 +68,7 @@ async def register_ticket(
         ) from exc
 
     ticket = await repository.create(
-        event_id=ticket_data.event_id,
+        event_id=event_id,
         ticket_id=UUID(ticket_id),
         first_name=ticket_data.first_name,
         last_name=ticket_data.last_name,

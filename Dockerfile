@@ -8,6 +8,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md alembic.ini ./
 COPY src ./src
 COPY alembic ./alembic
+COPY src/events_aggregator/entrypoint.py ./
 
 RUN pip install --no-cache-dir uv && \
     uv sync --frozen --no-dev
@@ -18,4 +19,4 @@ USER appuser
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn events_aggregator.main:app --host 0.0.0.0 --port 8000"]
+CMD ["python", "entrypoint.py"]
